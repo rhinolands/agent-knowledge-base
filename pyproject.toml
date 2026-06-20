@@ -1,0 +1,6 @@
+[project]
+name = "agent-knowledge-base"
+version = "0.1.0"
+description = "An agent-readable knowledge base (concept/reference/log buckets) with a stdlib indexer that lints, chunks, and emits a RAG-ingestable index."
+readme = "README.md"
+requires-python = ">=3.10"

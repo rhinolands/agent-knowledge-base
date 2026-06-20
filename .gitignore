@@ -1,0 +1,5 @@
+index.json
+capability-map.md
+__pycache__/
+*.pyc
+.venv/
