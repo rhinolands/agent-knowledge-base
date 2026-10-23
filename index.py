@@ -7,8 +7,9 @@ Buckets (by frontmatter `type`):
 
 What it does, stdlib-only (no deps):
   1. Parse each `kb/**/*.md` doc's frontmatter (name / type / description).
-  2. LINT — every doc must declare all three fields and a known type;
-     a violation exits non-zero so this can gate CI.
+  2. LINT — every doc must declare all three fields and a known type,
+     and no two docs may share a name; a violation exits non-zero so
+     this can gate CI.
   3. CHUNK each body into overlapping windows tagged with the doc's metadata,
      ready to embed into a vector store for RAG.
   4. EMIT  index.json (chunks + doc metadata) and capability-map.md
@@ -69,6 +70,7 @@ def build(kb_dir: Path, size: int, overlap: int) -> tuple[list[dict], list[str]]
     """Return (records, errors). One record per chunk; errors gate the lint."""
     records: list[dict] = []
     errors: list[str] = []
+    seen: dict[str, str] = {}  # name -> first path, so chunk ids stay unique
     for path in sorted(kb_dir.rglob("*.md")):
         meta, body = parse_frontmatter(path.read_text(encoding="utf-8"))
         rel = path.relative_to(kb_dir).as_posix()
@@ -81,6 +83,12 @@ def build(kb_dir: Path, size: int, overlap: int) -> tuple[list[dict], list[str]]
                 f"{rel}: unknown type {meta['type']!r} (expected {KNOWN_TYPES})"
             )
             continue
+        if meta["name"] in seen:
+            errors.append(
+                f"{rel}: duplicate name {meta['name']!r} (also in {seen[meta['name']]})"
+            )
+            continue
+        seen[meta["name"]] = rel
         for i, piece in enumerate(chunk(body, size, overlap)):
             records.append(
                 {

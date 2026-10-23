@@ -32,7 +32,7 @@ python index.py --chunk-size 800 --overlap 100
 It does four things, **stdlib-only**:
 
 1. **Parse** frontmatter from every `kb/**/*.md`.
-2. **Lint** — every doc must declare `name` / `type` / `description` and a known type. A violation **exits non-zero**, so it gates CI.
+2. **Lint** — every doc must declare `name` / `type` / `description` and a known type. No two docs may share a `name`. A violation **exits non-zero**, so it gates CI.
 3. **Chunk** each body into overlapping windows tagged with the doc's metadata — drop straight into a vector store.
 4. **Emit** `index.json` (chunks + metadata) and `capability-map.md` (overview grouped by bucket — the agent's table of contents).
 
@@ -43,6 +43,17 @@ It does four things, **stdlib-only**:
 - **One command** regenerates the index, so it lives in CI next to the content.
 
 Bring your own embedder/vector store — `index.json` is the hand-off point.
+
+## CI and tests
+
+`.github/workflows/ci.yml` runs on every push and pull request.
+It runs the KB lint (`python index.py`), the tests, ruff, and a gitleaks scan over every commit.
+
+```bash
+pip install pytest ruff
+pytest
+ruff check . && ruff format --check .
+```
 
 ---
 
